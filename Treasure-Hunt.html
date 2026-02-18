@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Treasure Chest Sorting Game</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
+    
+    * {
+      font-family: 'Fredoka', sans-serif;
+    }
+    
+    .game-container {
+      background: linear-gradient(180deg, #f5e6d3 0%, #e8d5c4 50%, #d4c4b0 100%);
+    }
+    
+    .floor {
+      background: linear-gradient(180deg, #8b7355 0%, #6d5a45 100%);
+      box-shadow: inset 0 10px 30px rgba(0,0,0,0.3);
+    }
+    
+    .magical-chest {
+      filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.8)) drop-shadow(0 0 40px rgba(255, 215, 0, 0.4));
+      animation: magicalGlow 2s ease-in-out infinite;
+    }
+    
+    @keyframes magicalGlow {
+      0%, 100% { filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.8)) drop-shadow(0 0 40px rgba(255, 215, 0, 0.4)); }
+      50% { filter: drop-shadow(0 0 30px rgba(255, 215, 0, 1)) drop-shadow(0 0 60px rgba(255, 215, 0, 0.6)); }
+    }
+    
+    .old-chest {
+      filter: drop-shadow(0 8px 16px rgba(0,0,0,0.3));
+    }
+    
+    .draggable-item {
+      cursor: grab;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      user-select: none;
+      touch-action: none;
+    }
+    
+    .draggable-item:hover {
+      transform: scale(1.1) translateY(-5px);
+    }
+    
+    .draggable-item:active {
+      cursor: grabbing;
+    }
+    
+    .draggable-item.dragging {
+      opacity: 0.8;
+      transform: scale(1.15);
+      z-index: 1000;
+    }
+    
+    .drop-zone {
+      transition: all 0.2s ease;
+    }
+    
+    .drop-zone.drag-over {
+      transform: scale(1.05);
+    }
+    
+    .drop-zone.drag-over .chest-body {
+      filter: brightness(1.2);
+    }
+    
+    .sparkle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: radial-gradient(circle, #fff 0%, #ffd700 50%, transparent 70%);
+      border-radius: 50%;
+      animation: sparkle 1.5s ease-in-out infinite;
+      pointer-events: none;
+    }
+    
+    @keyframes sparkle {
+      0%, 100% { opacity: 0; transform: scale(0); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+    
+    .item-in-chest {
+      position: relative;
+      transform: scale(0.7);
+      margin: 4px;
+    }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full overflow-auto">
+  <div id="game-wrapper" class="game-container w-full h-full min-h-full flex flex-col"><!-- Header -->
+   <header class="text-center py-4 px-4">
+    <h1 id="game-title" class="text-3xl md:text-4xl font-bold text-amber-900 drop-shadow-sm">✨ Treasure Sorting ✨</h1>
+    <p id="instruction-text" class="text-amber-800 mt-2 text-lg">Drag items into the chests!</p>
+   </header><!-- Main Game Area -->
+   <main class="flex-1 flex flex-col px-4 pb-4 min-h-0"><!-- Chests Area -->
+    <div class="flex justify-between items-end px-4 md:px-12 lg:px-24 py-6 flex-1"><!-- Magical Chest (Left) -->
+     <div class="drop-zone flex flex-col items-center" data-chest="magical"><span id="magical-label" class="text-amber-900 font-semibold mb-2 text-sm md:text-base bg-amber-100/80 px-3 py-1 rounded-full">كنز السماء</span>
+      <div class="magical-chest relative"><!-- Sparkles -->
+       <div class="sparkle" style="top: -10px; left: 20px; animation-delay: 0s;"></div>
+       <div class="sparkle" style="top: 10px; left: -5px; animation-delay: 0.3s;"></div>
+       <div class="sparkle" style="top: -5px; right: 10px; animation-delay: 0.6s;"></div>
+       <div class="sparkle" style="top: 20px; right: -8px; animation-delay: 0.9s;"></div>
+       <div class="sparkle" style="bottom: 30px; left: 10px; animation-delay: 1.2s;"></div><!-- Chest SVG -->
+       <svg class="chest-body w-28 h-24 md:w-36 md:h-32" viewbox="0 0 120 100"><!-- Chest Base --> <rect x="5" y="40" width="110" height="55" rx="8" fill="url(#magicalWood)" stroke="#8B4513" stroke-width="3" /> <!-- Chest Lid --> <path d="M5 45 Q5 20 60 15 Q115 20 115 45 L115 50 L5 50 Z" fill="url(#magicalLid)" stroke="#8B4513" stroke-width="3" /> <!-- Gold Trim --> <rect x="10" y="48" width="100" height="6" fill="#FFD700" rx="2" /> <!-- Lock --> <circle cx="60" cy="51" r="8" fill="#FFD700" stroke="#DAA520" stroke-width="2" /> <rect x="56" y="55" width="8" height="10" fill="#FFD700" rx="2" /> <!-- Gems --> <circle cx="25" cy="65" r="6" fill="#FF6B6B" stroke="#FFD700" stroke-width="2" /> <circle cx="95" cy="65" r="6" fill="#4ECDC4" stroke="#FFD700" stroke-width="2" /> <circle cx="60" cy="80" r="6" fill="#9B59B6" stroke="#FFD700" stroke-width="2" /> <defs>
+         <lineargradient id="magicalWood" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#DEB887" />
+          <stop offset="100%" style="stop-color:#8B4513" />
+         </lineargradient>
+         <lineargradient id="magicalLid" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#F4D03F" />
+          <stop offset="100%" style="stop-color:#C9A227" />
+         </lineargradient>
+        </defs>
+       </svg>
+      </div><!-- Items Container -->
+      <div id="magical-items" class="flex flex-wrap justify-center mt-2 min-h-12 max-w-32 md:max-w-40"></div>
+     </div><!-- Old Chest (Right) -->
+     <div class="drop-zone flex flex-col items-center" data-chest="old"><span id="old-label" class="text-amber-900 font-semibold mb-2 text-sm md:text-base bg-stone-200/80 px-3 py-1 rounded-full">كنزالأرض</span>
+      <div class="old-chest relative"><!-- Chest SVG -->
+       <svg class="chest-body w-28 h-24 md:w-36 md:h-32" viewbox="0 0 120 100"><!-- Chest Base --> <rect x="5" y="40" width="110" height="55" rx="8" fill="url(#oldWood)" stroke="#4a3728" stroke-width="3" /> <!-- Wood Grain Lines --> <line x1="20" y1="50" x2="20" y2="90" stroke="#3d2d1f" stroke-width="1" opacity="0.5" /> <line x1="50" y1="50" x2="50" y2="90" stroke="#3d2d1f" stroke-width="1" opacity="0.5" /> <line x1="80" y1="50" x2="80" y2="90" stroke="#3d2d1f" stroke-width="1" opacity="0.5" /> <line x1="100" y1="50" x2="100" y2="90" stroke="#3d2d1f" stroke-width="1" opacity="0.5" /> <!-- Chest Lid --> <path d="M5 45 Q5 25 60 20 Q115 25 115 45 L115 50 L5 50 Z" fill="url(#oldLid)" stroke="#4a3728" stroke-width="3" /> <!-- Rusty Metal Band --> <rect x="10" y="48" width="100" height="5" fill="#8B7355" rx="1" /> <!-- Old Lock --> <circle cx="60" cy="51" r="7" fill="#6B5B4F" stroke="#4a3728" stroke-width="2" /> <rect x="57" y="54" width="6" height="8" fill="#5D4E42" rx="1" /> <!-- Rust spots --> <circle cx="30" cy="70" r="3" fill="#8B4513" opacity="0.4" /> <circle cx="90" cy="75" r="4" fill="#8B4513" opacity="0.3" /> <defs>
+         <lineargradient id="oldWood" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#8B7355" />
+          <stop offset="100%" style="stop-color:#5D4E42" />
+         </lineargradient>
+         <lineargradient id="oldLid" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#7D6B5D" />
+          <stop offset="100%" style="stop-color:#5D4E42" />
+         </lineargradient>
+        </defs>
+       </svg>
+      </div><!-- Items Container -->
+      <div id="old-items" class="flex flex-wrap justify-center mt-2 min-h-12 max-w-32 md:max-w-40"></div>
+     </div>
+    </div><!-- Floor / Items Area -->
+    <div id="floor" class="floor rounded-t-3xl p-4 md:p-6 min-h-32 md:min-h-40 relative">
+     <div id="items-container" class="flex flex-wrap justify-center gap-3 md:gap-4"><!-- Items will be placed here -->
+     </div>
+    </div>
+   </main>
+  </div>
+  <script>
+    // Default configuration
+    const defaultConfig = {
+      game_title: '✨ Treasure Sorting ✨',
+      magical_chest_label: 'Magical Chest',
+      old_chest_label: 'Old Chest',
+      instruction_text: 'Drag items into the chests!',
+      primary_color: '#f5e6d3',
+      secondary_color: '#8b7355',
+      text_color: '#78350f',
+      accent_color: '#fbbf24',
+      surface_color: '#fef3c7'
+    };
+
+    // Items data
+    const items = [
+      { id: 'crown', image: 'images/Karene.jpg', name: 'Crown'},
+      // { id: 'book', emoji: '📖', name: 'Book' },
+      // { id: 'apple', emoji: '🍎', name: 'Apple' },
+      // { id: 'skull', emoji: '💀', name: 'Skull' },
+      // { id: 'heart', emoji: '❤️', name: 'Heart' },
+      // { id: 'moneybag', emoji: '💰', name: 'Money Bag' },
+      // { id: 'mirror', emoji: '🪞', name: 'Mirror' },
+      // { id: 'key', emoji: '🔑', name: 'Key' }
+    ];
+
+    // Shuffle array
+    function shuffleArray(array) {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+
+    // Create draggable item element
+    function createItemElement(item) {
+      const div = document.createElement('div');
+      div.className = 'draggable-item bg-amber-50 rounded-2xl p-3 md:p-4 shadow-lg border-2 border-amber-200 flex flex-col items-center';
+      div.setAttribute('draggable', 'true');
+      div.setAttribute('data-item-id', item.id);
+      div.innerHTML = `
+        <img src="${item.image}" 
+        alt="${item.name}" 
+        class="w-12 h-12 md:w-16 md:h-16 object-contain">
+        <span class="text-xs md:text-sm text-amber-800 mt-1 font-medium">${item.name}</span>
+      `;
+      
+      // Drag events
+      div.addEventListener('dragstart', handleDragStart);
+      div.addEventListener('dragend', handleDragEnd);
+      
+      // Touch events for mobile
+      div.addEventListener('touchstart', handleTouchStart, { passive: false });
+      div.addEventListener('touchmove', handleTouchMove, { passive: false });
+      div.addEventListener('touchend', handleTouchEnd);
+      
+      return div;
+    }
+
+    let draggedElement = null;
+    let touchOffsetX = 0;
+    let touchOffsetY = 0;
+
+    // Drag handlers
+    function handleDragStart(e) {
+      draggedElement = e.target.closest('.draggable-item');
+      draggedElement.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', draggedElement.dataset.itemId);
+    }
+
+    function handleDragEnd(e) {
+      if (draggedElement) {
+        draggedElement.classList.remove('dragging');
+        draggedElement = null;
+      }
+      document.querySelectorAll('.drop-zone').forEach(zone => {
+        zone.classList.remove('drag-over');
+      });
+    }
+
+    // Touch handlers
+    function handleTouchStart(e) {
+      e.preventDefault();
+      draggedElement = e.target.closest('.draggable-item');
+      if (!draggedElement) return;
+      
+      const touch = e.touches[0];
+      const rect = draggedElement.getBoundingClientRect();
+      touchOffsetX = touch.clientX - rect.left;
+      touchOffsetY = touch.clientY - rect.top;
+      
+      draggedElement.classList.add('dragging');
+      draggedElement.style.position = 'fixed';
+      draggedElement.style.zIndex = '1000';
+      draggedElement.style.left = (touch.clientX - touchOffsetX) + 'px';
+      draggedElement.style.top = (touch.clientY - touchOffsetY) + 'px';
+    }
+
+    function handleTouchMove(e) {
+      e.preventDefault();
+      if (!draggedElement) return;
+      
+      const touch = e.touches[0];
+      draggedElement.style.left = (touch.clientX - touchOffsetX) + 'px';
+      draggedElement.style.top = (touch.clientY - touchOffsetY) + 'px';
+      
+      // Check for drop zones
+      const dropZones = document.querySelectorAll('.drop-zone');
+      dropZones.forEach(zone => {
+        const rect = zone.getBoundingClientRect();
+        if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+            touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+          zone.classList.add('drag-over');
+        } else {
+          zone.classList.remove('drag-over');
+        }
+      });
+    }
+
+    function handleTouchEnd(e) {
+      if (!draggedElement) return;
+      
+      const touch = e.changedTouches[0];
+      let dropped = false;
+      
+      // Check if dropped on a zone
+      const dropZones = document.querySelectorAll('.drop-zone');
+      dropZones.forEach(zone => {
+        const rect = zone.getBoundingClientRect();
+        if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+            touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+          dropItemInChest(draggedElement, zone.dataset.chest);
+          dropped = true;
+        }
+        zone.classList.remove('drag-over');
+      });
+      
+      if (!dropped) {
+        // Return to floor
+        draggedElement.style.position = '';
+        draggedElement.style.zIndex = '';
+        draggedElement.style.left = '';
+        draggedElement.style.top = '';
+      }
+      
+      draggedElement.classList.remove('dragging');
+      draggedElement = null;
+    }
+
+    // Drop zone handlers
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      e.currentTarget.classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+      e.currentTarget.classList.remove('drag-over');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+      
+      const chestType = e.currentTarget.dataset.chest;
+      if (draggedElement) {
+        dropItemInChest(draggedElement, chestType);
+      }
+    }
+
+    function dropItemInChest(item, chestType) {
+      const container = document.getElementById(chestType + '-items');
+      item.classList.add('item-in-chest');
+      item.style.position = '';
+      item.style.zIndex = '';
+      item.style.left = '';
+      item.style.top = '';
+      container.appendChild(item);
+      
+      // Add little bounce animation
+      item.style.animation = 'none';
+      item.offsetHeight; // Trigger reflow
+      item.style.animation = 'dropBounce 0.3s ease';
+    }
+
+    // Add drop bounce animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes dropBounce {
+        0% { transform: scale(0.7) translateY(-10px); }
+        50% { transform: scale(0.75) translateY(0); }
+        100% { transform: scale(0.7) translateY(0); }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Initialize game
+    function initGame() {
+      const container = document.getElementById('items-container');
+      container.innerHTML = '';
+      document.getElementById('magical-items').innerHTML = '';
+      document.getElementById('old-items').innerHTML = '';
+      
+      const shuffledItems = shuffleArray(items);
+      shuffledItems.forEach(item => {
+        container.appendChild(createItemElement(item));
+      });
+      
+      // Setup drop zones
+      document.querySelectorAll('.drop-zone').forEach(zone => {
+        zone.addEventListener('dragover', handleDragOver);
+        zone.addEventListener('dragleave', handleDragLeave);
+        zone.addEventListener('drop', handleDrop);
+      });
+    }
+
+    // Config change handler
+    async function onConfigChange(config) {
+      document.getElementById('game-title').textContent = config.game_title || defaultConfig.game_title;
+      document.getElementById('magical-label').textContent = config.magical_chest_label || defaultConfig.magical_chest_label;
+      document.getElementById('old-label').textContent = config.old_chest_label || defaultConfig.old_chest_label;
+      document.getElementById('instruction-text').textContent = config.instruction_text || defaultConfig.instruction_text;
+      
+      // Apply colors
+      const wrapper = document.getElementById('game-wrapper');
+      const primaryColor = config.primary_color || defaultConfig.primary_color;
+      wrapper.style.background = `linear-gradient(180deg, ${primaryColor} 0%, ${adjustColor(primaryColor, -10)} 50%, ${adjustColor(primaryColor, -20)} 100%)`;
+      
+      const floor = document.getElementById('floor');
+      const secondaryColor = config.secondary_color || defaultConfig.secondary_color;
+      floor.style.background = `linear-gradient(180deg, ${secondaryColor} 0%, ${adjustColor(secondaryColor, -15)} 100%)`;
+      
+      const textColor = config.text_color || defaultConfig.text_color;
+      document.getElementById('game-title').style.color = textColor;
+      document.getElementById('instruction-text').style.color = adjustColor(textColor, 20);
+    }
+
+    function adjustColor(hex, percent) {
+      const num = parseInt(hex.replace('#', ''), 16);
+      const amt = Math.round(2.55 * percent);
+      const R = Math.max(0, Math.min(255, (num >> 16) + amt));
+      const G = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amt));
+      const B = Math.max(0, Math.min(255, (num & 0x0000FF) + amt));
+      return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+    }
+
+    // Map to capabilities
+    function mapToCapabilities(config) {
+      return {
+        recolorables: [
+          {
+            get: () => config.primary_color || defaultConfig.primary_color,
+            set: (value) => { config.primary_color = value; window.elementSdk.setConfig({ primary_color: value }); }
+          },
+          {
+            get: () => config.secondary_color || defaultConfig.secondary_color,
+            set: (value) => { config.secondary_color = value; window.elementSdk.setConfig({ secondary_color: value }); }
+          },
+          {
+            get: () => config.text_color || defaultConfig.text_color,
+            set: (value) => { config.text_color = value; window.elementSdk.setConfig({ text_color: value }); }
+          }
+        ],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      };
+    }
+
+    // Map to edit panel values
+    function mapToEditPanelValues(config) {
+      return new Map([
+        ['game_title', config.game_title || defaultConfig.game_title],
+        ['magical_chest_label', config.magical_chest_label || defaultConfig.magical_chest_label],
+        ['old_chest_label', config.old_chest_label || defaultConfig.old_chest_label],
+        ['instruction_text', config.instruction_text || defaultConfig.instruction_text]
+      ]);
+    }
+
+    // Initialize SDK
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities,
+        mapToEditPanelValues
+      });
+    }
+
+    // Start game
+    initGame();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9cfcf9122647c84f',t:'MTc3MTQxMTkyNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
