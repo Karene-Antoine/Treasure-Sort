@@ -101,7 +101,7 @@
    </header><!-- Main Game Area -->
    <main class="flex flex-col px-4 pb-4"><!-- Chests Area -->
     <div class="flex flex-wrap justify-center gap-16 px-4 md:px-12 py-6"><!-- Magical Chest (Left) -->
-     <div class="drop-zone flex flex-col items-center" data-chest="magical"><span id="magical-label" class="text-amber-900 font-semibold mb-2 text-sm md:text-base bg-amber-100/80 px-3 py-1 rounded-full">كنز السماء</span>
+     <div class="drop-zone flex flex-col items-center" data-chest="magical"><span id="magical-label" class="text-amber-900 font-bold mb-2 text-xl md:text-3xl bg-amber-100/80 px-4 py-1 rounded-full tracking-wide drop-shadow-sm">كنزي السماوي </span>
       <div class="magical-chest relative"><!-- Sparkles -->
        <div class="sparkle" style="top: -10px; left: 20px; animation-delay: 0s;"></div>
        <div class="sparkle" style="top: 10px; left: -5px; animation-delay: 0.3s;"></div>
@@ -120,9 +120,10 @@
         </defs>
        </svg>
       </div><!-- Items Container -->
-      <div id="magical-items"  class="grid grid-cols-5 gap-1 mt-4 w-full"></div>
+      <!-- <div id="magical-items"  class="grid grid-cols-5 gap-1 mt-4 w-full"></div> -->
+      <div id="magical-items"  class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-4 w-full"></div>
      </div><!-- Old Chest (Right) -->
-     <div class="drop-zone flex flex-col items-center" data-chest="old"><span id="old-label" class="text-amber-900 font-semibold mb-2 text-sm md:text-base bg-stone-200/80 px-3 py-1 rounded-full">كنزالأرض</span>
+     <div class="drop-zone flex flex-col items-center" data-chest="old"><span id="old-label" class="text-amber-900 font-bold mb-2 text-xl md:text-3xl bg-amber-100/80 px-4 py-1 rounded-full tracking-wide drop-shadow-sm"> كنزي الأرضي </span>
       <div class="old-chest relative"><!-- Chest SVG -->
        <svg class="chest-body w-28 h-24 md:w-36 md:h-32" viewbox="0 0 120 100"><!-- Chest Base --> <rect x="5" y="40" width="110" height="55" rx="8" fill="url(#oldWood)" stroke="#4a3728" stroke-width="3" /> <!-- Wood Grain Lines --> <line x1="20" y1="50" x2="20" y2="90" stroke="#3d2d1f" stroke-width="1" opacity="0.5" /> <line x1="50" y1="50" x2="50" y2="90" stroke="#3d2d1f" stroke-width="1" opacity="0.5" /> <line x1="80" y1="50" x2="80" y2="90" stroke="#3d2d1f" stroke-width="1" opacity="0.5" /> <line x1="100" y1="50" x2="100" y2="90" stroke="#3d2d1f" stroke-width="1" opacity="0.5" /> <!-- Chest Lid --> <path d="M5 45 Q5 25 60 20 Q115 25 115 45 L115 50 L5 50 Z" fill="url(#oldLid)" stroke="#4a3728" stroke-width="3" /> <!-- Rusty Metal Band --> <rect x="10" y="48" width="100" height="5" fill="#8B7355" rx="1" /> <!-- Old Lock --> <circle cx="60" cy="51" r="7" fill="#6B5B4F" stroke="#4a3728" stroke-width="2" /> <rect x="57" y="54" width="6" height="8" fill="#5D4E42" rx="1" /> <!-- Rust spots --> <circle cx="30" cy="70" r="3" fill="#8B4513" opacity="0.4" /> <circle cx="90" cy="75" r="4" fill="#8B4513" opacity="0.3" /> <defs>
          <lineargradient id="oldWood" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -136,7 +137,8 @@
         </defs>
        </svg>
       </div><!-- Items Container -->
-      <div id="old-items"  class="grid grid-cols-5 gap-1 mt-4 w-full"></div>
+      <!-- <div id="old-items"  class="grid grid-cols-5 gap-1 mt-4 w-full"></div> -->
+       <div id="old-items"  class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-4 w-full"></div>
      </div>
     </div><!-- Floor / Items Area -->
     <div id="floor"   class="floor rounded-t-3xl p-4 relative max-h-[40vh] overflow-hidden">
@@ -217,6 +219,13 @@
       div.addEventListener('touchstart', handleTouchStart, { passive: false });
       div.addEventListener('touchmove', handleTouchMove, { passive: false });
       div.addEventListener('touchend', handleTouchEnd);
+
+      div.addEventListener('click', (e) => {
+        // Prevent click if dragging
+        if (div.classList.contains('dragging')) return;
+
+        openImageModal(item.image);
+      });
       
       return div;
     }
@@ -452,8 +461,58 @@
       });
     }
 
+    // ===== IMAGE MODAL LOGIC =====
+    document.addEventListener('DOMContentLoaded', function () {
+
+      const modal = document.getElementById('image-modal');
+      const modalImage = document.getElementById('modal-image');
+      const closeModalBtn = document.getElementById('close-modal');
+
+      if (!modal || !modalImage || !closeModalBtn) return;
+
+      window.openImageModal = function (src) {
+        modalImage.src = src;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      };
+
+      function closeImageModal() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      closeModalBtn.addEventListener('click', closeImageModal);
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          closeImageModal();
+        }
+      });
+
+    });
+
     // Start game
     initGame();
+
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9cfcf9122647c84f',t:'MTc3MTQxMTkyNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9cfcf9122647c84f',t:'MTc3MTQxMTkyNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
+  
+ </script>
+ <!-- Image Preview Modal -->
+<div id="image-modal"
+     class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+
+  <div class="relative bg-white rounded-2xl p-4 shadow-2xl max-w-lg w-[90%]">
+    
+    <button id="close-modal"
+            class="absolute top-2 right-3 text-2xl font-bold text-gray-600 hover:text-black">
+      ×
+    </button>
+
+    <img id="modal-image"
+         src=""
+         class="w-full h-auto rounded-xl object-contain">
+  </div>
+</div>
+</body>
 </html>
